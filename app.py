@@ -33,6 +33,13 @@ def home():
         # Redirect to login page if not authenticated
         return render_template("login.html")
 
+@app.route("/name", methods=["POST"])
+def name():
+    one = request.form["artists_line_up"]
+    two = request.form["playlist_uri"]
+    three = request.form["name"]
+    os.system('python ml.py {} {} {}'.format(three, two, one))
+    return render_template("name.html", name = three, artists_line_up = one, playlist_uri = two, recommendations = 'NA')
 
 @app.route("/login")
 def login():
@@ -62,7 +69,8 @@ def authorized():
     session.pop("state", None)
     print("access_token: ", resp["access_token"])
     session["spotify_token"] = (resp["access_token"], "")
-    return redirect(url_for("home"))
+    # return redirect(url_for("home"))
+    return render_template("index.html")
 
 
 @spotify.tokengetter
