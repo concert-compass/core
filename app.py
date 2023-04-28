@@ -1,31 +1,34 @@
 import os
 import uuid
+import requests
 
-from ml import ml
+from ml import ml  # Importing custom ml module
 
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
 from flask import request
 from flask import Flask, render_template, redirect, url_for, session
 from dotenv import load_dotenv
 from flask_oauthlib.client import OAuth
 
+# Loading environment variables from .env file
 load_dotenv()
 
-app = Flask(__name__, template_folder="templates")
-app.secret_key = os.environ.get('SECRET_KEY')  # Replace with your secret key
+app = Flask(
+    __name__, template_folder="templates"
+)  # Creating Flask application instance
+app.secret_key = os.environ.get("SECRET_KEY")  # Replace with your secret key
 
 # Set up OAuth for Spotify
 oauth = OAuth(app)
 spotify = oauth.remote_app(
     "spotify",
-    consumer_key=os.environ.get('CLIENT_ID'),
-    consumer_secret=os.environ.get('CLIENT_SECRET'),
+    consumer_key=os.environ.get("CLIENT_ID"),
+    consumer_secret=os.environ.get("CLIENT_SECRET"),
     base_url="https://api.spotify.com/v1/",
     request_token_url=None,
     access_token_url="https://accounts.spotify.com/api/token",
     authorize_url="https://accounts.spotify.com/authorize",
 )
+
 
 # Routes
 @app.route("/")
@@ -37,15 +40,19 @@ def home():
         # Redirect to login page if not authenticated
         return render_template("login.html")
 
+
 @app.route("/name", methods=["POST"])
 def name():
-    # artists_line_up = request.form["artists_line_up"]
-    playlist_uri = request.form["playlist_uri"]
-    # req_name = request.form["name"]
-    # print(one, two, three)
-    # os.system('python ml.py {} {}'.format(req_name, playlist_uri))
-    ml(playlist_uri)
-    return render_template("name.html", playlist_uri = playlist_uri)#, recommendations = 'NA')
+    playlist_uri = request.form[
+        "playlist_uri"
+    ]  # Extracting playlist uri from POST request
+    ml(
+        playlist_uri
+    )  # Calling ml function from ml module, passing playlist uri as argument
+    return render_template(
+        "name.html", playlist_uri=playlist_uri
+    )  # Rendering name.html with playlist uri
+
 
 @app.route("/login")
 def login():
@@ -53,7 +60,10 @@ def login():
     state = str(uuid.uuid4())
     # Store the state value in the session
     session["state"] = state
-    return spotify.authorize(callback=url_for("authorized", _external=True), state=state)
+    return spotify.authorize(
+        callback=url_for("authorized", _external=True), state=state
+    )
+
 
 @app.route("/logout")
 def logout():
@@ -75,26 +85,30 @@ def authorized():
     session.pop("state", None)
     print("access_token: ", resp["access_token"])
     session["spotify_token"] = (resp["access_token"], "")
-    # return redirect(url_for("home"))
 
-    try:
-        os.remove('.cache')
-    except OSError as e:
-        pass
+    # Redirect to home page if authorization successful
+    access_token = session["spotify_token"][0]
+    headers = {"Authorization": f"Bearer {access_token}"}
 
-    scope = ["user-library-read",'user-top-read']
-    sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope, client_id=os.environ.get('CLIENT_ID'), \
-        client_secret=os.environ.get('CLIENT_SECRET'), redirect_uri='http://localhost:5555/authorized'))
-    results = sp.current_user_playlists(limit=50)
-    playlists=[]
-    for item in results['items']:
-        playlists.append({'name':item['name'],'uri':item['uri']})
-    return render_template("index.html",data=playlists)
+    response = requests.get("https://api.spotify.com/v1/me/playlists", headers=headers)
+
+    if response.status_code == 200:
+        playlists = []
+        for playlist in response.json()["items"]:
+            playlists.append({"name": playlist["name"], "uri": playlist["uri"]})
+        print(playlists)
+        return render_template("index.html", data=playlists)
+    else:
+        print("Error:", response.status_code, response.text)
 
 
+# Decorator function that returns the Spotify access token stored in the user's session
 @spotify.tokengetter
 def get_spotify_oauth_token():
     return session.get("spotify_token")
 
+
+# Run the Flask application
 if __name__ == "__main__":
-    app.run(host="localhost", port=5555, debug=os.environ.get('DEBUG'))
+    # Start the Flask development server on localhost:5555, with debug mode set by the DEBUG environment variable
+    app.run(host="0.0.0.0", port=5555, debug=os.environ.get("DEBUG"))
