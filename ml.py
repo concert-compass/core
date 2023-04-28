@@ -549,3 +549,4 @@ def ml(playlist_uri):
     df_user = create_audio_features_df(user_artists_audio_feats)
     artist_scores = get_top_artist_recommendations(df_user, df_fest, 3)
     plot_all_recommended_artists(artist_scores, artist_images)
+    return artist_scores
