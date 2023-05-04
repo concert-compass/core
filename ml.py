@@ -236,6 +236,29 @@ def get_artist_images(artist_list, image_dict={}):
 
     return image_dict
 
+def get_single_artist_image(artist_name):
+    """
+    Retrieves the image URLs for a list of artists from the Spotify API.
+    
+    Args:
+    - artist_list: a list of strings representing the names of the artists to retrieve images for
+    - image_dict: an optional dictionary with pre-existing artist image URLs to update
+    
+    Returns:
+    A dictionary with artist names as keys and image URLs as values.
+    """
+    # Check if any artists already have images in the image_dict and remove them from artist_list if so
+    time.sleep(0.01)
+
+    results = sp.search(q=artist_name, type='artist')
+
+    if results['artists']['items']:
+        image_url = results['artists']['items'][0]['images'][0]['url']
+    else:
+        image_url = None
+            
+    return image_url
+
 def get_artist_spotify_url(artist_name):
     '''
     Retrieves the Spotify URL for a list of artists from the Spotify API.
@@ -558,9 +581,10 @@ sp = spotipy.Spotify(auth_manager=auth_manager)
 def ml(playlist_uri):
     favorite_artists = get_artists_from_playlist(playlist_uri=playlist_uri)
     user_artists_audio_feats = get_audio_features_artist_top_tracks(favorite_artists)
-    artist_images_dict = load_dict_from_file("static/pkl/artist_images.pickle")
+    # user_artists_audio_feats = load_dict_from_file('static/pkl/user.pickle')
+    # artist_images_dict = load_dict_from_file("static/pkl/artist_images.pickle")
     fest_artists_audio_feats = load_dict_from_file("static/pkl/fest.pickle")
-    artist_images = get_artist_images(favorite_artists, artist_images_dict)
+    # artist_images = get_artist_images(favorite_artists, artist_images_dict)
     df_fest = create_audio_features_df(fest_artists_audio_feats)
     df_user = create_audio_features_df(user_artists_audio_feats)
     artist_scores = get_top_artist_recommendations(df_user, df_fest, 3)
@@ -569,11 +593,15 @@ def ml(playlist_uri):
     du = {}
     for artist in artist_scores.keys():
         tdict = {}
+        du[artist] = {}
+        du[artist]["image"] = get_single_artist_image(artist)
+        du[artist]["spotify"] = get_artist_spotify_url(artist)
         for i in range(len(artist_scores[artist])):
             tdict[artist_scores[artist]["artist"][i]] = {
-                "image": artist_images[artist_scores[artist]["artist"][i]],
+                "image": get_single_artist_image(artist_scores[artist].iloc[i]['artist']),
                 "score": artist_scores[artist][artist][i],
                 "spotify": get_artist_spotify_url(artist_scores[artist].iloc[i]['artist'])
             }
-        du[artist] = tdict
+        du[artist]["recommendations"] = tdict
+    print(du)
     return du
