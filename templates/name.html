@@ -8,9 +8,22 @@
     <!-- <h2>Here's your playlist: {{ playlist_uri }}</h2> -->
     <!-- <h2>Here's your artists line up: {{ artists_line_up }}</h2> -->
 
-    <h2>Here's your recommendations:</h2>
-    <img src="static/images/recommended_artists.png" alt="" width="1500" height="1500" paddingleft="250">
+    <!-- <h2>Here's your recommendations:</h2>
+    <img src="static/images/recommended_artists.png" alt="" width="1500" height="1500" paddingleft="250"> -->
     <!-- <img src="static/images/duh.jpg" alt="" width="300" height="200"> -->
+    <h1>Here's your recommendations:</h1>
+	{% for image in images %}
+		<div>
+			<h2>Artist: {{ image }}</h2>
+            {% for i in images[image] %}
+            <div>
+                <p><a href="{{ images[image][i]['spotify'] }}">Artist: {{ i }}</a></p>
+                <p><a href="{{ images[image][i]['spotify'] }}"><img src="{{ images[image][i]['image'] }}" alt="duh" width="150" height="150"></a></p>
+                <p>Score: {{ images[image][i]['score'] }}</p>
+            </div>
+            {% endfor %}
+		</div>
+	{% endfor %}
 </body>
 </html>
 

@@ -46,11 +46,9 @@ def name():
     playlist_uri = request.form[
         "playlist_uri"
     ]  # Extracting playlist uri from POST request
-    ml(
-        playlist_uri
-    )  # Calling ml function from ml module, passing playlist uri as argument
+    du = ml(playlist_uri)  # Calling ml function from ml module, passing playlist uri as argument
     return render_template(
-        "name.html", playlist_uri=playlist_uri
+        "name.html", images = du
     )  # Rendering name.html with playlist uri
 
 

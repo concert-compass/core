@@ -38,7 +38,7 @@ def get_audio_features_artist_top_tracks(artist_list):
     # Loop over each artist in the input list
     for artist_name in artist_list:
         # Use time.sleep to avoid hitting the Spotify API rate limit
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         # Use the Spotify search API to find the artist's URI
         results = sp.search(q=artist_name, type="artist")
@@ -108,7 +108,7 @@ def get_audio_features_artist_all_tracks(artist_list):
 
     # Loop through each artist in the list and retrieve their top tracks
     for artist_name in artist_list:
-        time.sleep(0.5)  # To avoid hitting the API rate limit
+        time.sleep(0.1)  # To avoid hitting the API rate limit
         results = sp.search(q=artist_name, type="artist")
         artist_uri = results["artists"]["items"][0]["uri"]
         albums = sp.artist_albums(artist_uri, album_type="album")
@@ -227,7 +227,7 @@ def get_artist_images(artist_list, image_dict={}):
     artist_list = list(set(artist_list) - set(image_dict.keys()))
 
     for artist_name in artist_list:
-        time.sleep(0.5)
+        time.sleep(0.1)
 
         results = sp.search(q=artist_name, type="artist")
 
@@ -235,6 +235,16 @@ def get_artist_images(artist_list, image_dict={}):
             image_dict[artist_name] = results["artists"]["items"][0]["images"][0]["url"]
 
     return image_dict
+
+def get_artist_spotify_url(artist_name):
+    '''
+    Retrieves the Spotify URL for a list of artists from the Spotify API.
+    '''
+    results = sp.search(q=artist_name, type='artist')
+    if results['artists']['items']:
+        return results['artists']['items'][0]['external_urls']['spotify']
+    else:
+        return None
 
 
 def plot_artist_ranking(df_similarity_scores_from_artist, image_dict):
@@ -446,6 +456,12 @@ def get_top_artist_recommendations(df_user, df_fest, n):
         data=cosim_scores, columns=df_fest.index.values, index=df_user.index.values
     )
 
+    m = []
+    for i in df_fest.index.values:
+        if i in df_user.index.values:
+            m.append(i)
+    df_result = df_result.drop(columns = m)
+
     # Create a dictionary to store the top recommended artists for each user
     artist_scores = {}
     for artist in df_result.index.values:
@@ -548,5 +564,16 @@ def ml(playlist_uri):
     df_fest = create_audio_features_df(fest_artists_audio_feats)
     df_user = create_audio_features_df(user_artists_audio_feats)
     artist_scores = get_top_artist_recommendations(df_user, df_fest, 3)
-    plot_all_recommended_artists(artist_scores, artist_images)
-    return artist_scores
+    # plot_all_recommended_artists(artist_scores, artist_images)
+
+    du = {}
+    for artist in artist_scores.keys():
+        tdict = {}
+        for i in range(len(artist_scores[artist])):
+            tdict[artist_scores[artist]["artist"][i]] = {
+                "image": artist_images[artist_scores[artist]["artist"][i]],
+                "score": artist_scores[artist][artist][i],
+                "spotify": get_artist_spotify_url(artist_scores[artist].iloc[i]['artist'])
+            }
+        du[artist] = tdict
+    return du
