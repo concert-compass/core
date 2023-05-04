@@ -104,6 +104,7 @@
                                         <div class="artist-name">{{ artist }}</div>
                                     </a>
                                 </div>
+                                <p style="color:#cc281d;">Same vibe: &nbsp;</p>
                                 <div class="recommended-artists">
                                     {% for recommended_artist, recommended_data in data['recommendations'].items() %}
                                         <div class="artist">
@@ -112,6 +113,7 @@
                                                 <div class="artist-name">{{ recommended_artist }}</div>
                                             </a>
                                         </div>
+                                        <p>{{ recommended_data[score] }}</p>
                                     {% endfor %}
                                 </div>
                             </div>

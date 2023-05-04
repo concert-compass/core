@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -603,5 +604,12 @@ def ml(playlist_uri):
                 "spotify": get_artist_spotify_url(artist_scores[artist].iloc[i]['artist'])
             }
         du[artist]["recommendations"] = tdict
-    print(du)
+    # print(du)
+
+    with open("static/data/dict.json") as test_file:
+        duh = json.load(test_file)
+    duh[playlist_uri] = du
+    with open("static/data/dict.json", "w") as outfile:
+        json.dump(duh, outfile)
+    
     return du

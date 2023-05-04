@@ -48,9 +48,15 @@ def name():
         "playlist_uri"
     ]  # Extracting playlist uri from POST request
     # du = ml(playlist_uri)  # Calling ml function from ml module, passing playlist uri as argument
-    filename = os.path.join(app.static_folder, 'data', 'duh.json')
+    filename = os.path.join(app.static_folder, 'data', 'dict.json')
     with open(filename) as test_file:
-        du = json.load(test_file)
+        duh = json.load(test_file)
+    if playlist_uri in duh.keys():
+        du = duh[playlist_uri]
+        print("oneee")
+    else:
+        du = ml(playlist_uri)
+        print("twooo")
     return render_template(
         "name.html", docs = du
     )  # Rendering name.html with playlist uri
